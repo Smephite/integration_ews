@@ -171,7 +171,7 @@ const onConnectMS365CallbackClick = async () => {
 const onAutoCorrelateEventsClick = async () => {
 	try {
 		const uri = generateAppUrl('/auto-correlate-events')
-		const response = await axios.post(uri)
+		const response = await axios.put(uri)
 		const { created, skipped } = response.data
 		showSuccess(t(APP_ID, `Created ${created} new calendar(s), skipped ${skipped} already linked.`))
 		await fetchCorrelations()

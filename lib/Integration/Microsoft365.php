@@ -112,14 +112,17 @@ class Microsoft365 {
 		$asecret = $ConfigurationService->retrieveSystemValue('ms365_application_secret');
 
 		$httpClient = (\OC::$server->get(\OCP\Http\Client\IClientService::class))->newClient();
+        $params = [
+            'client_id' => $aid,
+            'grant_type' => 'refresh_token',
+            'scope' => 'https://outlook.office.com/EWS.AccessAsUser.All offline_access openid email',
+            'refresh_token' => $code,
+        ];
+        if (!empty($asecret)) {
+            $params['client_secret'] = $asecret;
+        }
         $response = $httpClient->post('https://login.microsoftonline.com/' . $tid . '/oauth2/v2.0/token', [
-            'form_params' => [
-                'client_id' => $aid,
-                'client_secret' => $asecret,
-                'grant_type' => 'refresh_token',
-                'scope' => 'https://outlook.office.com/EWS.AccessAsUser.All offline_access openid email',
-                'refresh_token' => $code,
-            ],
+            'form_params' => $params,
         ]);
 		$data = json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
@@ -168,8 +171,8 @@ class Microsoft365 {
         $tid = $ConfigurationService->retrieveSystemValue('ms365_tenant_id');
         $aid = $ConfigurationService->retrieveSystemValue('ms365_application_id');
         $asecret = $ConfigurationService->retrieveSystemValue('ms365_application_secret');
-        // evaluate if required parameters
-        if (!empty($tid) && !empty($aid) && !empty($asecret)) {
+        // evaluate if required parameters (secret optional for public clients)
+        if (!empty($tid) && !empty($aid)) {
             // return authorization url
             return 'https://login.microsoftonline.com/' . $tid . '/oauth2/v2.0/authorize' .
                     '?client_id=' . urlencode($aid) . 

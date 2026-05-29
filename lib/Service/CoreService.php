@@ -684,6 +684,72 @@ class CoreService
     }
 
     /**
+     * Creates a new local Nextcloud calendar for each remote Exchange calendar
+     * that does not already have a correlation, then saves the correlations.
+     *
+     * @param string $uid nextcloud user id
+     *
+     * @return array summary with counts of created/skipped collections
+     * @since Release 1.0.0
+     */
+    public function autoCorrelateEvents(string $uid): array
+    {
+
+        $created = 0;
+        $skipped = 0;
+
+        if (!$this->ConfigurationService->isCalendarAppAvailable($uid)) {
+            return ['created' => 0, 'skipped' => 0];
+        }
+
+        // create remote store client and configure services
+        $RemoteStore = $this->createClient($uid);
+        $Configuration = $this->ConfigurationService->retrieveUser($uid);
+        $Configuration = $this->ConfigurationService->toUserConfigurationObject($Configuration);
+        $this->RemoteEventsService->configure($Configuration, $RemoteStore);
+        $this->LocalEventsService->configure($Configuration, $this->LocalEventsStore);
+
+        // fetch remote collections
+        $remoteCollections = $this->RemoteEventsService->listCollections('U', '');
+        try {
+            $remoteCollections = array_merge($remoteCollections, $this->RemoteEventsService->listCollections('P', ''));
+        } catch (Throwable $t) {
+            // public collections may not be available
+        }
+
+        foreach ($remoteCollections as $remote) {
+            // skip if a correlation already exists for this remote collection
+            $existing = $this->CorrelationsService->findByRemoteId($uid, 'EC', $remote->Id);
+            if ($existing !== null) {
+                $skipped++;
+                continue;
+            }
+
+            // create a new local calendar named after the remote collection
+            $calId = 'ews-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', strtolower($remote->Name ?? $remote->Id));
+            $local = $this->LocalEventsService->createCollection($uid, $calId, $remote->Name ?? $remote->Id);
+
+            if ($local === null) {
+                // try with a unique suffix if name collision
+                $local = $this->LocalEventsService->createCollection($uid, $calId . '-' . substr(md5($remote->Id), 0, 6), $remote->Name ?? $remote->Id);
+            }
+
+            if ($local !== null) {
+                $correlation = new \OCA\EWS\Db\Correlation();
+                $correlation->settype('EC');
+                $correlation->setuid($uid);
+                $correlation->setloid((string) $local->Id);
+                $correlation->setroid($remote->Id);
+                $this->CorrelationsService->create($correlation);
+                $created++;
+            }
+        }
+
+        return ['created' => $created, 'skipped' => $skipped];
+
+    }
+
+    /**
      * Retrieves collection correlations for all modules
      *
      * @param string $uid nextcloud user id

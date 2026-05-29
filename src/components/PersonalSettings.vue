@@ -168,6 +168,22 @@ const onConnectMS365CallbackClick = async () => {
 	}
 }
 
+const onAutoCorrelateEventsClick = async () => {
+	try {
+		const uri = generateAppUrl('/auto-correlate-events')
+		const response = await axios.post(uri)
+		const { created, skipped } = response.data
+		showSuccess(t(APP_ID, `Created ${created} new calendar(s), skipped ${skipped} already linked.`))
+		await fetchCorrelations()
+		const local = await axios.get(generateAppUrl('/fetch-local-collections'))
+		if (local.data.EventCollections) {
+			availableLocalEventCollections.value = local.data.EventCollections
+		}
+	} catch (error: any) {
+		showError(t(APP_ID, 'Failed to auto-correlate calendars') + ': ' + error.response?.data)
+	}
+}
+
 const onDisconnectClick = async () => {
 	try {
 		const uri = generateAppUrl('/disconnect')
@@ -725,6 +741,14 @@ onMounted(() => {
 					{{
 						t(APP_ID, 'Select the remote calendar(s) you wish to synchronize by pressing the link button next to the calendars name and selecting the local calendar to synchronize to.')
 					}}
+				</div>
+				<div class="actions" style="margin-bottom: 8px;">
+					<NcButton @click="onAutoCorrelateEventsClick">
+						<template #icon>
+							<CalendarIcon/>
+						</template>
+						{{ t(APP_ID, 'Create new calendar for each remote calendar') }}
+					</NcButton>
 				</div>
 				<div v-if="state.system_events == 1">
 					<ul v-if="availableRemoteEventCollections.length > 0">

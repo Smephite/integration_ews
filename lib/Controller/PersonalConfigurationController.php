@@ -180,6 +180,27 @@ class PersonalConfigurationController extends Controller {
 	}
 
 	/**
+	 * Creates a new local Nextcloud calendar for each remote Exchange calendar
+	 * that does not already have a correlation.
+	 *
+	 * @return DataResponse
+	 */
+	#[NoAdminRequired]
+	public function AutoCorrelateEvents(): DataResponse {
+
+		if ($this->userId === null) {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
+		try {
+			$result = $this->CoreService->autoCorrelateEvents($this->userId);
+			return new DataResponse($result);
+		} catch (Throwable $th) {
+			return new DataResponse($th->getMessage(), 401);
+		}
+
+	}
+
+	/**
 	 * handels disconnect click event
 	 *
 	 * @return DataResponse

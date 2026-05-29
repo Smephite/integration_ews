@@ -61,6 +61,8 @@ class PersonalSettings implements ISettings {
 		// retrieve user configuration
 		$configuration = $this->ConfigurationService->retrieveUser($this->userId);
 		$configuration['system_ms365_authorization_uri'] = \OCA\EWS\Integration\Microsoft365::constructAuthorizationUrl();
+		$customRedirect = $this->ConfigurationService->retrieveSystemValue('ms365_redirect_uri');
+		$configuration['system_ms365_manual_flow'] = !empty($customRedirect);
 		$configuration['system_approved_account_servers'] = $this->ConfigurationService->getApprovedAccountServers();
 
 		$this->initialStateService->provideInitialState('personal-configuration', $configuration);

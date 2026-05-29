@@ -23,5 +23,6 @@ export interface PersonalConfiguration {
 	system_events: number
 	system_tasks: number
 	system_ms365_authorization_uri?: string
+	system_ms365_manual_flow?: boolean
 	system_approved_account_servers?: string[]
 }

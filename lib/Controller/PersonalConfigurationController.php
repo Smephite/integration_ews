@@ -142,6 +142,44 @@ class PersonalConfigurationController extends Controller {
 	}
 
 	/**
+	 * Handles MS365 connect when using a custom (non-Nextcloud) redirect URI.
+	 * The user pastes the full redirect URL they received (e.g. from Thunderbird's
+	 * localhost redirect) and the code is extracted here to complete the token exchange.
+	 *
+	 * @param string $redirect_url  The full redirect URL containing the authorization code
+	 *
+	 * @return DataResponse
+	 */
+	#[NoAdminRequired]
+	public function ConnectMS365Callback(string $redirect_url): DataResponse {
+
+		// evaluate if user id is present
+		if ($this->userId === null || empty($redirect_url)) {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
+
+		// extract code from the pasted redirect URL
+		$parts = parse_url($redirect_url);
+		if ($parts === false || empty($parts['query'])) {
+			return new DataResponse('Invalid redirect URL', Http::STATUS_BAD_REQUEST);
+		}
+		parse_str($parts['query'], $query);
+		$code = $query['code'] ?? null;
+		if (empty($code)) {
+			return new DataResponse('No authorization code found in URL', Http::STATUS_BAD_REQUEST);
+		}
+
+		$flags = ['VALIDATE'];
+		try {
+			$this->CoreService->connectAccountMS365($this->userId, $code, $flags);
+			return new DataResponse('success');
+		} catch (Throwable $th) {
+			return new DataResponse($th->getMessage(), 401);
+		}
+
+	}
+
+	/**
 	 * handels disconnect click event
 	 *
 	 * @return DataResponse

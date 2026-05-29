@@ -95,6 +95,7 @@ const onSaveClick = async () => {
 			ms365_tenant_id: state.ms365_tenant_id,
 			ms365_application_id: state.ms365_application_id,
 			ms365_application_secret: state.ms365_application_secret,
+			ms365_redirect_uri: state.ms365_redirect_uri,
 			approved_account_servers: state.approved_account_servers,
 		},
 	}
@@ -222,6 +223,20 @@ const onSaveClick = async () => {
 					   v-model="state.ms365_application_secret"
 					   type="password"
 					   :placeholder="t(APP_ID, '')"
+					   autocomplete="off"
+					   autocorrect="off"
+					   autocapitalize="none"
+					   :style="{ width: '48ch' }">
+			</div>
+			<div class="setting-row">
+				<label for="ews-microsoft-redirect-uri">
+					<EwsIcon/>
+					{{ t(APP_ID, 'Redirect URI') }}
+				</label>
+				<input id="ews-microsoft-redirect-uri"
+					   v-model="state.ms365_redirect_uri"
+					   type="text"
+					   :placeholder="t(APP_ID, 'Leave empty to use the Nextcloud callback URL')"
 					   autocomplete="off"
 					   autocorrect="off"
 					   autocapitalize="none"

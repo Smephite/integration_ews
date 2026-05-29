@@ -58,6 +58,7 @@ class ConfigurationService {
 		'ms365_tenant_id' => '',
 		'ms365_application_id' => '',
 		'ms365_application_secret' => '',
+		'ms365_redirect_uri' => '',
 		'approved_account_servers' => []
 	];
 

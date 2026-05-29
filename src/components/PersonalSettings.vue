@@ -78,6 +78,7 @@ const establishedTaskCorrelations = ref<Correlation[]>([])
 
 const configureManually = ref<boolean>(!!(state.account_server ?? ''))
 const configureMail = ref<boolean>(false)
+const ms365ManualUrl = ref<string>('')
 
 const approvedAccountServersCount = computed((): number => {
 	return state.system_approved_account_servers?.length ?? 0
@@ -151,6 +152,20 @@ const onConnectMS365Click = () => {
 		fetchPreferences()
 		loadData()
 	})
+}
+
+const onConnectMS365CallbackClick = async () => {
+	if (!ms365ManualUrl.value) return
+	try {
+		const uri = generateAppUrl('/connect-ms365-callback')
+		await axios.post(uri, { redirect_url: ms365ManualUrl.value })
+		state.account_connected = '1'
+		ms365ManualUrl.value = ''
+		await fetchPreferences()
+		loadData()
+	} catch (error: any) {
+		showError(t(APP_ID, 'Failed to authenticate with MS365') + ': ' + error.response?.data)
+	}
 }
 
 const onDisconnectClick = async () => {
@@ -428,6 +443,36 @@ onMounted(() => {
 					{{
 						t(APP_ID, 'Microsoft Exchange 365 configuration missing. Ask your Nextcloud administrator to configure Microsoft Exchange 365 in the EWS Connector section in the administration section.')
 					}}
+				</div>
+				<div v-else-if="state.system_ms365_manual_flow">
+					<div class="description">
+						{{
+							t(APP_ID, 'Open the authorization URL in your browser, sign in, then paste the redirect URL you are sent to below.')
+						}}
+					</div>
+					<div class="actions">
+						<NcButton @click="onConnectMS365Click">
+							<template #icon>
+								<CheckIcon/>
+							</template>
+							{{ t(APP_ID, 'Open authorization URL') }}
+						</NcButton>
+					</div>
+					<div class="setting-row" style="margin-top: 8px;">
+						<input v-model="ms365ManualUrl"
+							   type="text"
+							   :placeholder="t(APP_ID, 'Paste the redirect URL here')"
+							   autocomplete="off"
+							   autocorrect="off"
+							   autocapitalize="none"
+							   :style="{ width: '48ch' }">
+						<NcButton :disabled="!ms365ManualUrl" @click="onConnectMS365CallbackClick">
+							<template #icon>
+								<CheckIcon/>
+							</template>
+							{{ t(APP_ID, 'Submit') }}
+						</NcButton>
+					</div>
 				</div>
 				<div v-else>
 					<div class="description">

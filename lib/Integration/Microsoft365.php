@@ -47,19 +47,26 @@ class Microsoft365 {
         $tid = $ConfigurationService->retrieveSystemValue('ms365_tenant_id');
 		$aid = $ConfigurationService->retrieveSystemValue('ms365_application_id');
 		$asecret = $ConfigurationService->retrieveSystemValue('ms365_application_secret');
+        $customRedirect = $ConfigurationService->retrieveSystemValue('ms365_redirect_uri');
+        $redirectUri = !empty($customRedirect)
+            ? $customRedirect
+            : $UrlGenerator->getAbsoluteURL('/apps/integration_ews/connect-ms365');
 		$code = rtrim($code,'#');
 
 		$httpClient = (\OC::$server->get(\OCP\Http\Client\IClientService::class))->newClient();
 
+        $params = [
+            'client_id' => $aid,
+            'grant_type' => 'authorization_code',
+            'scope' => 'https://outlook.office.com/EWS.AccessAsUser.All offline_access openid email',
+            'redirect_uri' => $redirectUri,
+            'code' => $code,
+        ];
+        if (!empty($asecret)) {
+            $params['client_secret'] = $asecret;
+        }
         $response = $httpClient->post('https://login.microsoftonline.com/' . $tid . '/oauth2/v2.0/token', [
-            'form_params' => [
-                'client_id' => $aid,
-                'client_secret' => $asecret,
-                'grant_type' => 'authorization_code',
-                'scope' => 'https://outlook.office.com/EWS.AccessAsUser.All offline_access openid email',
-                'redirect_uri' => $UrlGenerator->getAbsoluteURL('/apps/integration_ews/connect-ms365'),
-                'code' => $code,
-            ],
+            'form_params' => $params,
         ]);
 
 		$data = json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
@@ -170,15 +177,18 @@ class Microsoft365 {
         // retrieve required application parameters
         $tid = $ConfigurationService->retrieveSystemValue('ms365_tenant_id');
         $aid = $ConfigurationService->retrieveSystemValue('ms365_application_id');
-        $asecret = $ConfigurationService->retrieveSystemValue('ms365_application_secret');
+        $customRedirect = $ConfigurationService->retrieveSystemValue('ms365_redirect_uri');
+        $redirectUri = !empty($customRedirect)
+            ? $customRedirect
+            : $UrlGenerator->getAbsoluteURL('/apps/integration_ews/connect-ms365');
         // evaluate if required parameters (secret optional for public clients)
         if (!empty($tid) && !empty($aid)) {
             // return authorization url
             return 'https://login.microsoftonline.com/' . $tid . '/oauth2/v2.0/authorize' .
-                    '?client_id=' . urlencode($aid) . 
-                    '&response_type=code' . 
-                    '&scope=' . urlencode('https://outlook.office.com/EWS.AccessAsUser.All') .
-                    '&redirect_uri=' . urlencode($UrlGenerator->getAbsoluteURL('/apps/integration_ews/connect-ms365'));
+                    '?client_id=' . urlencode($aid) .
+                    '&response_type=code' .
+                    '&scope=' . urlencode('https://outlook.office.com/EWS.AccessAsUser.All offline_access openid email') .
+                    '&redirect_uri=' . urlencode($redirectUri);
         }
         else {
             // return empty string

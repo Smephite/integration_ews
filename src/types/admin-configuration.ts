@@ -8,5 +8,6 @@ export interface AdminConfiguration {
 	ms365_tenant_id: string
 	ms365_application_id: string
 	ms365_application_secret: string
+	ms365_redirect_uri: string
 	approved_account_servers: string[]
 }

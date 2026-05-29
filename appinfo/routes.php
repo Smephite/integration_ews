@@ -28,6 +28,7 @@ return [
 		['name' => 'AdminConfiguration#depositConfiguration', 'url' => '/admin-configuration', 'verb' => 'PUT'],
 		['name' => 'PersonalConfiguration#ConnectAlternate', 'url' => '/connect-alternate', 'verb' => 'GET'],
 		['name' => 'PersonalConfiguration#ConnectMS365', 'url' => '/connect-ms365', 'verb' => 'GET'],
+		['name' => 'PersonalConfiguration#ConnectMS365Callback', 'url' => '/connect-ms365-callback', 'verb' => 'POST'],
 		['name' => 'PersonalConfiguration#Disconnect', 'url' => '/disconnect', 'verb' => 'GET'],
 		['name' => 'PersonalConfiguration#Harmonize', 'url' => '/harmonize', 'verb' => 'GET'],
 		['name' => 'PersonalConfiguration#fetchLocalCollections', 'url' => '/fetch-local-collections', 'verb' => 'GET'],
